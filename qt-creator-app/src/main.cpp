@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     MapController mapController;
     engine.rootContext()->setContextProperty("mapController", &mapController);
 
-    engine.load(QUrl::fromLocalFile(QCoreApplication::applicationDirPath() + "/../qml/MainUI.qml"));
+    engine.load(QUrl::fromLocalFile(R"(C:\Users\DELL\OneDrive\Bureau\Master-IM\projet-reseau-mobile\Projet-R-seaux-Mobiles\qt-creator-app\qml\MainUI.qml)"));
 
     if (engine.rootObjects().isEmpty())
         return -1;
