@@ -158,9 +158,8 @@ bool InterferenceGraph::areInRange(const Vehicle* v1, const Vehicle* v2,
 {
     double distance = calculateDistance(v1, v2);
 
-    // Les véhicules sont en portée si la distance est inférieure
-    // au rayon de transmission de l'un OU de l'autre
-    return distance <= range1 || distance <= range2;
+    // Connexion si les cercles de transmission se chevauchent
+    return distance <= (range1 + range2);
 }
 
 QVariantList InterferenceGraph::getConnectionsForVisualization() const
