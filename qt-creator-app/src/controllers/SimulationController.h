@@ -32,6 +32,7 @@ public:
     Q_INVOKABLE void resetSimulation();
     Q_INVOKABLE void spawnVehicles(int count);
     Q_INVOKABLE QVariantList getVehiclePositions();
+    Q_INVOKABLE QVariantList getVehiclesWithTransmissionRanges();
 
     // ✅ NOUVEAU: Obtenir les connexions V2V avec positions pour affichage
     Q_INVOKABLE QVariantList getV2VConnectionsWithPositions();

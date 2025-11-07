@@ -43,7 +43,22 @@ Item {
             mapContainer.mapLoaded()
         }
 
-        // ✅ Layer pour les connexions V2V (DOIT être AVANT les véhicules pour apparaître dessous)
+        // ✅ Layer pour les rayons de transmission (SOUS les connexions)
+        MapItemView {
+            id: transmissionRangeLayer
+            model: ListModel { id: transmissionRangeModel }
+
+            delegate: MapCircle {
+                center: QtPositioning.coordinate(model.lat, model.lon)
+                radius: model.range  // Rayon en mètres (100-500m)
+                color: model.color
+                opacity: 0.15  // Très transparent pour ne pas surcharger
+                border.width: 1
+                border.color: model.borderColor
+            }
+        }
+
+        // ✅ Layer pour les connexions V2V
         MapItemView {
             id: connectionLayer
             model: ListModel { id: connectionModel }
@@ -59,7 +74,7 @@ Item {
             }
         }
 
-        // ✅ Layer Canvas pour dessiner tous les véhicules
+        // ✅ Layer pour les véhicules (DESSUS pour être visibles)
         MapItemView {
             id: vehicleLayer
             model: ListModel { id: vehicleModel }
@@ -112,12 +127,23 @@ Item {
         "#9b59b6", "#1abc9c", "#e67e22", "#95a5a6"
     ]
 
+    // Couleurs pour les rayons de transmission (plus transparentes)
+    property var rangeColors: [
+        "#e74c3c40", "#3498db40", "#2ecc7140", "#f39c1240",
+        "#9b59b640", "#1abc9c40", "#e67e2240", "#95a5a640"
+    ]
+
+    property var rangeBorderColors: [
+        "#e74c3c", "#3498db", "#2ecc71", "#f39c12",
+        "#9b59b6", "#1abc9c", "#e67e22", "#95a5a6"
+    ]
+
     // ✅ Mise à jour des positions des véhicules
     Connections {
         target: simulationController
         function onVehiclePositionsUpdated(positions) {
             if (positions.length > 0) {
-                // Mise à jour ultra-rapide du modèle
+                // Mise à jour des véhicules
                 if (vehicleModel.count !== positions.length) {
                     vehicleModel.clear()
                     for (let i = 0; i < positions.length; ++i) {
@@ -129,7 +155,6 @@ Item {
                         })
                     }
                 } else {
-                    // Mise à jour en place (plus rapide)
                     for (let i = 0; i < positions.length; ++i) {
                         let pos = positions[i]
                         vehicleModel.set(i, {
@@ -143,27 +168,55 @@ Item {
         }
     }
 
-    // ✅ NOUVEAU: Mise à jour des connexions V2V
+    // ✅ Mise à jour des rayons de transmission ET des connexions V2V
     Timer {
-        interval: 200  // Mise à jour 5 fois par seconde (pour ne pas surcharger)
+        interval: 200  // 5 fois par seconde
         running: simulationController.isRunning
         repeat: true
         onTriggered: {
             if (simulationController.interferenceGraph) {
-                // Récupérer les connexions avec les positions
+                // 1. Récupérer les positions avec rayons de transmission
+                var vehiclesWithRanges = simulationController.getVehiclesWithTransmissionRanges()
+
+                // Mise à jour des rayons de transmission
+                if (transmissionRangeModel.count !== vehiclesWithRanges.length) {
+                    transmissionRangeModel.clear()
+                    for (var i = 0; i < vehiclesWithRanges.length; i++) {
+                        var v = vehiclesWithRanges[i]
+                        transmissionRangeModel.append({
+                            lat: v.lat,
+                            lon: v.lon,
+                            range: v.transmissionRange,
+                            color: rangeColors[v.id % rangeColors.length],
+                            borderColor: rangeBorderColors[v.id % rangeBorderColors.length]
+                        })
+                    }
+                } else {
+                    for (var i = 0; i < vehiclesWithRanges.length; i++) {
+                        var v = vehiclesWithRanges[i]
+                        transmissionRangeModel.set(i, {
+                            lat: v.lat,
+                            lon: v.lon,
+                            range: v.transmissionRange,
+                            color: rangeColors[v.id % rangeColors.length],
+                            borderColor: rangeBorderColors[v.id % rangeBorderColors.length]
+                        })
+                    }
+                }
+
+                // 2. Récupérer les connexions
                 var connections = simulationController.getV2VConnectionsWithPositions()
 
-                // Mettre à jour le modèle
+                // Mise à jour des connexions
                 connectionModel.clear()
-
-                // Limiter le nombre de connexions affichées pour les performances
                 var maxDisplay = Math.min(500, connections.length)
-                for (var i = 0; i < maxDisplay; i++) {
-                    connectionModel.append(connections[i])
+                for (var t = 0; t < maxDisplay; t++) {
+                    connectionModel.append(connections[t])
                 }
 
                 if (connections.length > 0 && frameCounter++ % 50 === 0) {
-                    console.log("📡 Affichage de", maxDisplay, "connexions V2V sur", connections.length)
+                    console.log("📡", vehiclesWithRanges.length, "véhicules,",
+                               maxDisplay, "connexions affichées")
                 }
             }
         }

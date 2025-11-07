@@ -207,3 +207,28 @@ void SimulationController::clearVehicles()
     }
     m_vehicles.clear();
 }
+
+// Ajouter cette méthode dans SimulationController.cpp
+
+QVariantList SimulationController::getVehiclesWithTransmissionRanges()
+{
+    QVariantList result;
+    result.reserve(m_vehicles.size());
+
+    for (Vehicle* vehicle : m_vehicles) {
+        int vehicleId = vehicle->getId();
+
+        // Récupérer le rayon de transmission depuis InterferenceGraph
+        double transmissionRange = m_interferenceGraph.getTransmissionRange(vehicleId);
+
+        QVariantMap item;
+        item["id"] = vehicleId;
+        item["lat"] = vehicle->latitude();
+        item["lon"] = vehicle->longitude();
+        item["transmissionRange"] = transmissionRange;  // En mètres
+
+        result.append(item);
+    }
+
+    return result;
+}
