@@ -52,6 +52,8 @@ public:
     int isolatedVehicleCount() const { return m_isolatedVehicles.size(); }
     int connectedVehicleCount() const { return m_adjacencyList.size(); }
 
+    double getTransmissionRange(int vehicleId) const;
+
     // Export pour visualisation QML
     Q_INVOKABLE QVariantList getConnectionsForVisualization() const;
     Q_INVOKABLE QVariantMap getStatistics() const;

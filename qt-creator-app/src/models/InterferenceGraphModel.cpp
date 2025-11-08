@@ -120,7 +120,7 @@ QList<V2VConnection> InterferenceGraph::getActiveConnections() const
 }
 
 double InterferenceGraph::calculateDistance(const Vehicle* v1, const Vehicle* v2) const
-{
+{ // Haversine Distance
     const double R = 6371000.0; // Rayon de la Terre en mètres
 
     double lat1 = qDegreesToRadians(v1->latitude());
@@ -158,9 +158,8 @@ bool InterferenceGraph::areInRange(const Vehicle* v1, const Vehicle* v2,
 {
     double distance = calculateDistance(v1, v2);
 
-    // Les véhicules sont en portée si la distance est inférieure
-    // au rayon de transmission de l'un OU de l'autre
-    return distance <= range1 || distance <= range2;
+    // Connexion si les cercles de transmission se chevauchent
+    return distance <= (range1 + range2);
 }
 
 QVariantList InterferenceGraph::getConnectionsForVisualization() const
@@ -212,4 +211,12 @@ QVariantMap InterferenceGraph::getStatistics() const
     }
 
     return stats;
+}
+
+// Ajouter cette méthode dans InterferenceGraph.cpp
+
+double InterferenceGraph::getTransmissionRange(int vehicleId) const
+{
+    // Retourner le rayon stocké, ou le rayon par défaut si non trouvé
+    return m_transmissionRanges.value(vehicleId, DEFAULT_TRANSMISSION_RANGE);
 }
