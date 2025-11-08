@@ -7,7 +7,7 @@
 #include <QVariantList>
 #include "controllers/MapController.h"
 #include "SimulationController.h"
-
+#include <QDir>
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
     SimulationController simulationController(mapController.getGraph());
     engine.rootContext()->setContextProperty("simulationController", &simulationController);
 
-    engine.load(QUrl::fromLocalFile(R"(C:\Users\DELL\OneDrive\Bureau\Master-IM\projet-reseau-mobile\V2V-Network-Simulator\qt-creator-app\src\MainUI.qml)"));
+    const QUrl url = QUrl::fromLocalFile(QDir::current().filePath("../../src/MainUI.qml"));
+    engine.load(url);
 
     if (engine.rootObjects().isEmpty()) {
         qCritical() << "❌ Erreur : impossible de charger l'interface QML";
