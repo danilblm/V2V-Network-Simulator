@@ -35,11 +35,9 @@ qt_add_qml_module(appV2VProject
         src/views/MapView.qml
         src/views/SimulationPanelView.qml
         src/views/InterferencePanelView.qml
-        QML_FILES
-        QML_FILES src/views/Sidebar.qml
-        QML_FILES src/views/CollapsibleSection.qml
-        QML_FILES src/views/VehicleItem.qml
-
+        src/views/Sidebar.qml
+        src/views/CollapsibleSection.qml
+        src/views/VehicleItem.qml
 )
 
 # --- Lien avec les bibliothèques Qt
