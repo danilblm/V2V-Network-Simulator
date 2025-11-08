@@ -88,7 +88,6 @@ Item {
             }
         }
 
-        // ✅ Layer pour les véhicules (DESSUS pour être visibles)
         // ✅ Layer pour les véhicules (icônes réelles)
         MapItemView {
             id: vehicleLayer
