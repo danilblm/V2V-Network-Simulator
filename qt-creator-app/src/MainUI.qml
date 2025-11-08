@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtPositioning
-
 import "views"
 
 ApplicationWindow {
@@ -10,69 +9,25 @@ ApplicationWindow {
     height: 900
     title: "Simulation V2V avec Graphe d'Interférences – Mulhouse"
 
+    // ✅ Carte principale
     MapView {
         id: mapView
         anchors.fill: parent
         onMapLoaded: {
             console.log("✅ Carte prête")
-            // Charger automatiquement la carte au démarrage
             mapController.loadOSMData("data/mulhouse.json")
         }
     }
 
-    // Panneau de contrôle carte (haut droite)
-    Rectangle {
-        anchors.right: parent.right
+    // ✅ Barre latérale unique à droite (contient tout : carte, simulation, stats)
+    Sidebar {
+        id: sidebar
         anchors.top: parent.top
-        width: 240
-        height: 180
-        radius: 10
-        color: "#ffffffdd"
-        border.color: "#2c3e50"
-        border.width: 1
-        anchors.margins: 20
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 10
-
-            Button {
-                text: "Charger carte"
-                onClicked: mapController.loadOSMData("data/mulhouse.json")
-            }
-
-            Button {
-                text: "Centrer Mulhouse"
-                onClicked: mapView.centerMulhouse()
-            }
-
-            Button {
-                text: "Zoom +"
-                onClicked: mapView.zoomIn()
-            }
-
-            Button {
-                text: "Zoom −"
-                onClicked: mapView.zoomOut()
-            }
-        }
-    }
-
-    // Panneau de simulation (gauche haut)
-    SimulationPanelView {
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.margins: 20
-    }
-
-    // ✅ NOUVEAU: Panneau du graphe d'interférences (droite bas)
-    InterferencePanelView {
-        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 20
+        anchors.right: parent.right
     }
 
-    // Indicateur de performance (haut centre)
+    // ✅ Panneau de performance (au centre haut)
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
@@ -106,4 +61,13 @@ ApplicationWindow {
             }
         }
     }
+
+    // ✅ (Optionnel) panneau du graphe d’interférences si tu veux le garder en bas à droite
+    InterferencePanelView {
+        id: interferencePanel
+        anchors.left: parent.left       // ✅ positionné à gauche
+        anchors.bottom: parent.bottom   // ✅ en bas
+        anchors.margins: 20             // ✅ petite marge tout autour
+    }
+
 }

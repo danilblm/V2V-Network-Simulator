@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtLocation
 import QtPositioning
 
+
 Item {
     id: mapContainer
     width: parent ? parent.width : 800
@@ -18,13 +19,26 @@ Item {
     Map {
         id: map
         anchors.fill: parent
-
         plugin: Plugin {
-            name: "osm"
-            PluginParameter { name: "osm.mapping.providersrepository.disabled"; value: true }
-            PluginParameter { name: "osm.mapping.host"; value: "https://tile.openstreetmap.org/" }
-            PluginParameter { name: "osm.mapping.secure"; value: true }
-        }
+                name: "osm"
+
+                // ⚙️ Désactive le dépôt de providers Qt
+                PluginParameter {
+                    name: "osm.mapping.providersrepository.disabled"
+                    value: true
+                }
+
+                // ⚙️ Utilise le serveur officiel d'OpenStreetMap
+                PluginParameter {
+                    name: "osm.mapping.host"
+                    value: "https://tile.openstreetmap.org/"
+                }
+
+                PluginParameter {
+                    name: "osm.mapping.secure"
+                    value: true
+                }
+            }
 
         center: QtPositioning.coordinate(47.7508, 7.3359)
         zoomLevel: 14
@@ -74,19 +88,62 @@ Item {
             }
         }
 
-        // ✅ Layer pour les véhicules (DESSUS pour être visibles)
+        // ✅ Layer pour les véhicules (icônes réelles)
         MapItemView {
             id: vehicleLayer
             model: ListModel { id: vehicleModel }
+            delegate: VehicleItem { }   // <-- ton nouveau composant
+        }
 
-            delegate: MapCircle {
-                center: QtPositioning.coordinate(model.lat, model.lon)
-                radius: 8
-                color: model.color || "#ff0000"
-                border.width: 2
-                border.color: "#ffffff"
-                opacity: 0.9
+    }
+    MouseArea {
+        anchors.fill: parent
+        property real lastX: 0
+        property real lastY: 0
+        cursorShape: Qt.OpenHandCursor
+
+        onPressed: (mouse) => {
+            cursorShape = Qt.ClosedHandCursor
+            lastX = mouse.x
+            lastY = mouse.y
+            mouse.accepted = true
+        }
+
+        onReleased: (mouse) => {
+            cursorShape = Qt.OpenHandCursor
+        }
+
+        onPositionChanged: (mouse) => {
+            if (mouse.buttons & Qt.LeftButton) {
+                var dx = mouse.x - lastX
+                var dy = mouse.y - lastY
+
+                var latPerPixel = 0.00005 * Math.pow(2, 14 - map.zoomLevel)
+                var lonPerPixel = 0.00007 * Math.pow(2, 14 - map.zoomLevel)
+
+                // ✅ Correction ici : latitude += dy
+                map.center.latitude += dy * latPerPixel
+                map.center.longitude -= dx * lonPerPixel
+
+                if (map.center.latitude < minLat) map.center.latitude = minLat
+                if (map.center.latitude > maxLat) map.center.latitude = maxLat
+                if (map.center.longitude < minLon) map.center.longitude = minLon
+                if (map.center.longitude > maxLon) map.center.longitude = maxLon
+
+                lastX = mouse.x
+                lastY = mouse.y
             }
+        }
+
+        onWheel: (wheel) => {
+            if (wheel.angleDelta.y > 0)
+                map.zoomLevel = Math.min(map.zoomLevel + 0.5, map.maximumZoomLevel)
+            else
+                map.zoomLevel = Math.max(map.zoomLevel - 0.5, map.minimumZoomLevel)
+        }
+
+        onDoubleClicked: (mouse) => {
+            map.zoomLevel = Math.min(map.zoomLevel + 1, map.maximumZoomLevel)
         }
     }
 
