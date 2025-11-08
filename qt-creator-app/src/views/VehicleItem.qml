@@ -17,6 +17,6 @@ MapQuickItem {
         smooth: true
         antialiasing: true
         transformOrigin: Item.Center
-        rotation: model.angle || 0   // (tu pourras l’utiliser plus tard)
+        rotation: model.angle || 0   // Rotation basée sur l'angle du véhicule
     }
 }
