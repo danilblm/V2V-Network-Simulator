@@ -11,7 +11,7 @@
 #include <QString>
 #include <QPair>
 #include "VehicleModel.h"
-#include "spatialgrid.h"
+#include "SpatialGridModel.h"
 
 // ✅ ARÊTE DIRECTIONNELLE : A peut communiquer avec B
 struct DirectedEdge {

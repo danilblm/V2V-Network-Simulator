@@ -1,4 +1,4 @@
-#include "SpatialGrid.h"
+#include "SpatialGridModel.h"
 #include <QtMath>
 
 SpatialGrid::SpatialGrid(double minLat, double maxLat, double minLon, double maxLon, double cellSizeMeters)

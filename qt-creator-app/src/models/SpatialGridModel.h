@@ -1,5 +1,5 @@
-#ifndef SPATIALGRID_H
-#define SPATIALGRID_H
+#ifndef SPATIALGRIDMODEL_H
+#define SPATIALGRIDMODEL_H
 
 #include <QMap>
 #include <QList>
@@ -66,4 +66,4 @@ private:
     double m_cellSizeLon;
 };
 
-#endif // SPATIALGRID_H
+#endif // SPATIALGRIDMODEL_H

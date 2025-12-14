@@ -10,6 +10,11 @@ InterferenceGraph::InterferenceGraph(QObject *parent)
 
 void InterferenceGraph::initializeSpatialGrid(double minLat, double maxLat, double minLon, double maxLon)
 {
+    if (m_spatialGrid) {
+        delete m_spatialGrid;
+        m_spatialGrid = nullptr;
+    }
+
     // Taille de cellule = 500m (suffisant pour couvrir les rayons de transmission max)
     m_spatialGrid = new SpatialGrid(minLat, maxLat, minLon, maxLon, 500.0);
 }

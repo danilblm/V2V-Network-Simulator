@@ -13,8 +13,8 @@ Item {
     property real minLon: 7.28
     property real maxLon: 7.40
     property var vehicleColors: [
-        "#2C3E50", "#34495E", "#7F8C8D", "#95A5A6",
-        "#BDC3C7", "#ECF0F1", "#FFFFFF", "#000000"
+        "#e74c3c", "#3498db", "#2ecc71", "#f1c40f",
+        "#9b59b6", "#e67e22", "#1abc9c", "#e84393"
     ]
 
     signal mapLoaded()

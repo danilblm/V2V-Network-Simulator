@@ -6,10 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 
-# --- Trouver les modules Qt nécessaires
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Positioning Location)
 
-# --- Cibles de ton exécutable
 qt_add_executable(appV2VProject
     src/main.cpp
 
@@ -24,11 +22,10 @@ qt_add_executable(appV2VProject
     src/models/VehicleModel.h
     src/models/InterferenceGraphModel.h
     src/models/InterferenceGraphModel.cpp
-    src/models/SpatialGrid.h
-    src/models/SpatialGrid.cpp
+    src/models/SpatialGridModel.h
+    src/models/SpatialGridModel.cpp
 )
 
-# --- Déclaration du module QML
 qt_add_qml_module(appV2VProject
     URI V2VProject
     VERSION 1.0
@@ -37,13 +34,10 @@ qt_add_qml_module(appV2VProject
         src/views/MapView.qml
         src/views/SimulationPanelView.qml
         src/views/InterferencePanelView.qml
-        QML_FILES
-        QML_FILES src/views/Sidebar.qml
-        QML_FILES src/views/CollapsibleSection.qml
-        QML_FILES src/views/VehicleItem.qml
+        src/views/Sidebar.qml
+        src/views/VehicleItem.qml
 )
 
-# --- Lien avec les bibliothèques Qt
 target_link_libraries(appV2VProject
     PRIVATE
         Qt6::Core
@@ -54,5 +48,4 @@ target_link_libraries(appV2VProject
         Qt6::Location
 )
 
-# --- Inclure le dossier src pour les headers
 target_include_directories(appV2VProject PRIVATE src src/controllers)
