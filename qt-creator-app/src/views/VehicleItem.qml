@@ -11,12 +11,12 @@ MapQuickItem {
     // Icône de voiture
     sourceItem: Image {
         id: carImage
-        source: "../assets/car.png"     // ← ton image locale
+        source: "../assets/car.png"     // Path to local car icon image
         width: 32
         height: 32
         smooth: true
         antialiasing: true
         transformOrigin: Item.Center
-        rotation: model.angle || 0   // (tu pourras l’utiliser plus tard)
+        rotation: model.angle || 0   // Rotation basée sur l'angle du véhicule
     }
 }
