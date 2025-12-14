@@ -1,5 +1,4 @@
 #include "GraphModel.h"
-#include <QDebug>
 
 Graph::Graph() : nextId(0) {}
 

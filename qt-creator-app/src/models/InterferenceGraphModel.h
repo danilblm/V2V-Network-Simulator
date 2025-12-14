@@ -1,5 +1,5 @@
-#ifndef INTERFERENCEGRAPHMODELH_H
-#define INTERFERENCEGRAPHMODELH_H
+#ifndef INTERFERENCEGRAPH_H
+#define INTERFERENCEGRAPH_H
 
 #include <QObject>
 #include <QMap>
@@ -10,17 +10,29 @@
 #include <QVariantMap>
 #include <QString>
 #include <QPair>
+#include "VehicleModel.h"
+#include "SpatialGridModel.h"
 
-#include "models/VehicleModel.h"
+// ✅ ARÊTE DIRECTIONNELLE : A peut communiquer avec B
+struct DirectedEdge {
+    int fromVehicleId;  // Véhicule émetteur
+    int toVehicleId;    // Véhicule dans le rayon
+    double distance;
+    double signalStrength;
 
-// Structure représentant une connexion V2V entre deux véhicules
-struct V2VConnection {
+    bool operator==(const DirectedEdge& other) const {
+        return fromVehicleId == other.fromVehicleId && toVehicleId == other.toVehicleId;
+    }
+};
+
+// ✅ CONNEXION POTENTIELLE : Les rayons se chevauchent (stockée, pas affichée)
+struct PotentialConnection {
     int vehicleId1;
     int vehicleId2;
-    double distance;        // Distance entre les deux véhicules
-    double signalStrength;  // Force du signal (basée sur la distance)
+    double distance;
+    bool rangesOverlap;  // Les cercles se touchent
 
-    bool operator==(const V2VConnection& other) const {
+    bool operator==(const PotentialConnection& other) const {
         return (vehicleId1 == other.vehicleId1 && vehicleId2 == other.vehicleId2) ||
                (vehicleId1 == other.vehicleId2 && vehicleId2 == other.vehicleId1);
     }
@@ -29,67 +41,80 @@ struct V2VConnection {
 class InterferenceGraph : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int connectionCount READ connectionCount NOTIFY connectionsChanged)
-    Q_PROPERTY(int isolatedVehicleCount READ isolatedVehicleCount NOTIFY connectionsChanged)
+    Q_PROPERTY(int directedEdgeCount READ directedEdgeCount NOTIFY graphChanged)
+    Q_PROPERTY(int potentialConnectionCount READ potentialConnectionCount NOTIFY graphChanged)
+    Q_PROPERTY(int isolatedVehicleCount READ isolatedVehicleCount NOTIFY graphChanged)
 
 public:
     explicit InterferenceGraph(QObject *parent = nullptr);
 
-    // Mise à jour du graphe d'interférences
+    // Initialiser la grille spatiale
+    void initializeSpatialGrid(double minLat, double maxLat, double minLon, double maxLon);
+
+    // ✅ Mise à jour du graphe d'interférences (OPTIMISÉ avec SpatialGrid)
     void updateGraph(const QList<Vehicle*>& vehicles);
 
     // Définir le rayon de transmission (en mètres)
     void setTransmissionRange(int vehicleId, double range);
 
-    // Obtenir les voisins d'un véhicule
-    QList<int> getNeighbors(int vehicleId) const;
-
-    // Obtenir toutes les connexions actives
-    QList<V2VConnection> getActiveConnections() const;
-
-    // Statistiques
-    int connectionCount() const { return m_activeConnections.size(); }
-    int isolatedVehicleCount() const { return m_isolatedVehicles.size(); }
-    int connectedVehicleCount() const { return m_adjacencyList.size(); }
-
+    // Obtenir le rayon de transmission
     double getTransmissionRange(int vehicleId) const;
 
+    // Obtenir les voisins accessibles depuis un véhicule (arêtes sortantes)
+    QList<int> getReachableVehicles(int vehicleId) const;
+
+    // Obtenir toutes les arêtes directionnelles (pour affichage visuel)
+    QList<DirectedEdge> getDirectedEdges() const;
+
+    // Obtenir toutes les connexions potentielles (chevauchement)
+    QList<PotentialConnection> getPotentialConnections() const;
+
+    // Statistiques
+    int directedEdgeCount() const { return m_directedEdges.size(); }
+    int potentialConnectionCount() const { return m_potentialConnections.size(); }
+    int isolatedVehicleCount() const { return m_isolatedVehicles.size(); }
+
     // Export pour visualisation QML
-    Q_INVOKABLE QVariantList getConnectionsForVisualization() const;
+    Q_INVOKABLE QVariantList getDirectedEdgesForVisualization() const;
+    Q_INVOKABLE QVariantList getPotentialConnectionsForVisualization() const;
     Q_INVOKABLE QVariantMap getStatistics() const;
 
 signals:
-    void connectionsChanged();
-    void newConnectionEstablished(int vehicleId1, int vehicleId2, double distance);
-    void connectionLost(int vehicleId1, int vehicleId2);
+    void graphChanged();
+    void newDirectedEdgeEstablished(int fromVehicleId, int toVehicleId, double distance);
+    void directedEdgeLost(int fromVehicleId, int toVehicleId);
+    void newPotentialConnection(int vehicleId1, int vehicleId2);
+    void potentialConnectionLost(int vehicleId1, int vehicleId2);
 
 private:
-    // Calcul de distance entre deux véhicules
     double calculateDistance(const Vehicle* v1, const Vehicle* v2) const;
-
-    // Calcul de la force du signal
     double calculateSignalStrength(double distance, double transmissionRange) const;
 
-    // Vérifier si deux véhicules sont en portée
-    bool areInRange(const Vehicle* v1, const Vehicle* v2, double range1, double range2) const;
+    // ✅ NOUVEAU: Algorithme de fallback O(n²) si la grille n'est pas disponible
+    void updateGraphBruteForce(const QList<Vehicle*>& vehicles);
 
-    // Liste d'adjacence du graphe: vehicleId -> liste des voisins
+    // ✅ ARÊTES DIRECTIONNELLES : from → to (affichées visuellement)
+    QList<DirectedEdge> m_directedEdges;
+
+    // Liste d'adjacence : vehicleId → liste des véhicules accessibles
     QMap<int, QSet<int>> m_adjacencyList;
 
-    // Connexions actives
-    QList<V2VConnection> m_activeConnections;
+    // ✅ CONNEXIONS POTENTIELLES : chevauchement de rayons (stockées uniquement)
+    QList<PotentialConnection> m_potentialConnections;
 
     // Rayons de transmission par véhicule (100-500m)
     QMap<int, double> m_transmissionRanges;
 
-    // Véhicules isolés (sans connexion)
     QSet<int> m_isolatedVehicles;
 
-    // Connexions de la frame précédente (pour détecter changements)
-    QSet<QPair<int, int>> m_previousConnections;
+    // État précédent pour détection de changements
+    QSet<QPair<int, int>> m_previousDirectedEdges;
+    QSet<QPair<int, int>> m_previousPotentialConnections;
 
-    // Rayon de transmission par défaut
-    const double DEFAULT_TRANSMISSION_RANGE = 300.0; // 300 mètres
+    // ✅ Grille spatiale pour optimisation O(n) au lieu de O(n²)
+    SpatialGrid* m_spatialGrid;
+
+    const double DEFAULT_TRANSMISSION_RANGE = 300.0;
 };
 
-#endif // INTERFERENCEGRAPHMODELH_H
+#endif // INTERFERENCEGRAPH_H

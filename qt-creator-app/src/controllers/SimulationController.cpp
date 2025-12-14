@@ -1,7 +1,6 @@
 #include "SimulationController.h"
 #include <QRandomGenerator>
 #include <QDateTime>
-#include <QDebug>
 #include <QVariant>
 
 SimulationController::SimulationController(Graph* graph, QObject *parent)
@@ -31,7 +30,6 @@ void SimulationController::startSimulation()
     m_lastUpdateTime = QDateTime::currentMSecsSinceEpoch();
     m_timer->start();
     emit isRunningChanged();
-    qDebug() << "✅ Simulation démarrée avec" << m_vehicles.size() << "véhicules";
 }
 
 void SimulationController::pauseSimulation()
@@ -41,7 +39,6 @@ void SimulationController::pauseSimulation()
     m_isRunning = false;
     m_timer->stop();
     emit isRunningChanged();
-    qDebug() << "⏸️ Simulation en pause";
 }
 
 void SimulationController::resetSimulation()
@@ -51,7 +48,6 @@ void SimulationController::resetSimulation()
     m_nextVehicleId = 0;
     emit vehicleCountChanged();
     emit vehiclePositionsUpdated(QVariantList());
-    qDebug() << "🔄 Simulation réinitialisée";
 }
 
 void SimulationController::setTimeScale(double scale)
@@ -61,7 +57,6 @@ void SimulationController::setTimeScale(double scale)
 
     m_timeScale = scale;
     emit timeScaleChanged();
-    qDebug() << "⏱️ Échelle de temps:" << m_timeScale << "x";
 }
 
 void SimulationController::spawnVehicles(int count)
@@ -83,8 +78,6 @@ void SimulationController::spawnVehicles(int count)
         return;
     }
 
-    qDebug() << "🚗 Création de" << count << "véhicules sur" << validStartNodes.size() << "nœuds valides";
-
     for (int i = 0; i < count; ++i) {
         int index = QRandomGenerator::global()->bounded(validStartNodes.size());
         Node* startNode = validStartNodes[index];
@@ -94,7 +87,6 @@ void SimulationController::spawnVehicles(int count)
     }
 
     emit vehicleCountChanged();
-    qDebug() << "✅ Total véhicules:" << m_vehicles.size();
 }
 
 QVariantList SimulationController::getVehiclePositions()
@@ -118,8 +110,8 @@ QVariantList SimulationController::getV2VConnectionsWithPositions()
 {
     QVariantList result;
 
-    // Obtenir toutes les connexions actives
-    QList<V2VConnection> connections = m_interferenceGraph.getActiveConnections();
+    // ✅ Obtenir les ARÊTES DIRECTIONNELLES (seules affichées visuellement)
+    QList<DirectedEdge> edges = m_interferenceGraph.getDirectedEdges();
 
     // Créer un map rapide pour accéder aux véhicules par ID
     QMap<int, Vehicle*> vehicleMap;
@@ -127,22 +119,22 @@ QVariantList SimulationController::getV2VConnectionsWithPositions()
         vehicleMap[v->getId()] = v;
     }
 
-    // Pour chaque connexion, ajouter les positions des deux véhicules
-    for (const V2VConnection& conn : connections) {
-        Vehicle* v1 = vehicleMap.value(conn.vehicleId1, nullptr);
-        Vehicle* v2 = vehicleMap.value(conn.vehicleId2, nullptr);
+    // Pour chaque arête, ajouter les positions avec direction
+    for (const DirectedEdge& edge : edges) {
+        Vehicle* vFrom = vehicleMap.value(edge.fromVehicleId, nullptr);
+        Vehicle* vTo = vehicleMap.value(edge.toVehicleId, nullptr);
 
-        // Vérifier que les deux véhicules existent
-        if (v1 && v2) {
+        if (vFrom && vTo) {
             QVariantMap item;
-            item["vehicleId1"] = conn.vehicleId1;
-            item["vehicleId2"] = conn.vehicleId2;
-            item["lat1"] = v1->latitude();
-            item["lon1"] = v1->longitude();
-            item["lat2"] = v2->latitude();
-            item["lon2"] = v2->longitude();
-            item["distance"] = conn.distance;
-            item["signalStrength"] = conn.signalStrength;
+            item["fromVehicleId"] = edge.fromVehicleId;
+            item["toVehicleId"] = edge.toVehicleId;
+            item["lat1"] = vFrom->latitude();
+            item["lon1"] = vFrom->longitude();
+            item["lat2"] = vTo->latitude();
+            item["lon2"] = vTo->longitude();
+            item["distance"] = edge.distance;
+            item["signalStrength"] = edge.signalStrength;
+            item["isDirected"] = true;  // Pour dessiner une flèche
 
             result.append(item);
         }
@@ -150,6 +142,31 @@ QVariantList SimulationController::getV2VConnectionsWithPositions()
 
     return result;
 }
+
+QVariantList SimulationController::getVehiclesWithTransmissionRanges()
+{
+    QVariantList result;
+    result.reserve(m_vehicles.size());
+
+    for (Vehicle* vehicle : m_vehicles) {
+        int vehicleId = vehicle->getId();
+
+        // Récupérer le rayon de transmission depuis InterferenceGraph
+        double transmissionRange = m_interferenceGraph.getTransmissionRange(vehicleId);
+
+        QVariantMap item;
+        item["id"] = vehicleId;
+        item["lat"] = vehicle->latitude();
+        item["lon"] = vehicle->longitude();
+        item["transmissionRange"] = transmissionRange;  // En mètres
+
+        result.append(item);
+    }
+
+    return result;
+}
+
+
 
 void SimulationController::updateSimulation()
 {
@@ -180,11 +197,8 @@ void SimulationController::updateSimulation()
         static int logCounter = 0;
         if (++logCounter >= 30) {
             logCounter = 0;
-            qDebug() << "📍 Envoi de" << positions.size() << "véhicules au QML";
             if (!positions.isEmpty()) {
                 QVariantMap first = positions.first().toMap();
-                qDebug() << "   Premier véhicule: lat=" << first["lat"].toDouble()
-                         << "lon=" << first["lon"].toDouble();
             }
         }
 
@@ -206,29 +220,4 @@ void SimulationController::clearVehicles()
         delete vehicle;
     }
     m_vehicles.clear();
-}
-
-// Ajouter cette méthode dans SimulationController.cpp
-
-QVariantList SimulationController::getVehiclesWithTransmissionRanges()
-{
-    QVariantList result;
-    result.reserve(m_vehicles.size());
-
-    for (Vehicle* vehicle : m_vehicles) {
-        int vehicleId = vehicle->getId();
-
-        // Récupérer le rayon de transmission depuis InterferenceGraph
-        double transmissionRange = m_interferenceGraph.getTransmissionRange(vehicleId);
-
-        QVariantMap item;
-        item["id"] = vehicleId;
-        item["lat"] = vehicle->latitude();
-        item["lon"] = vehicle->longitude();
-        item["transmissionRange"] = transmissionRange;  // En mètres
-
-        result.append(item);
-    }
-
-    return result;
 }

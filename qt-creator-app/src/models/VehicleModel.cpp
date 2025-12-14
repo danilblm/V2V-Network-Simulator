@@ -1,7 +1,6 @@
 #include "VehicleModel.h"
 #include <QRandomGenerator>
 #include <QtMath>
-#include <QDebug>
 
 Vehicle::Vehicle(int id, Node* startNode, QObject *parent)
     : QObject(parent)
@@ -23,10 +22,6 @@ void Vehicle::update(double deltaTime)
 {
     if (!m_currentEdge || !m_targetNode) {
         m_stuckCounter++;
-        if (m_stuckCounter > 10) {
-            qDebug() << "❌ Véhicule" << m_id << "bloqué pendant" << m_stuckCounter << "frames au nœud"
-                     << (m_currentNode ? m_currentNode->id : -1);
-        }
         selectNextEdge();
         if (!m_currentEdge || !m_targetNode) return;
     }
@@ -74,7 +69,6 @@ void Vehicle::selectNextEdge()
 
         // ✅ Si bloqué trop longtemps, réinitialiser l'historique
         if (m_stuckCounter > 30) {
-            qDebug() << "🔄 Reset historique du véhicule" << m_id;
             m_previousNode = nullptr;
             m_stuckCounter = 0;
         }
@@ -106,8 +100,6 @@ void Vehicle::selectNextEdge()
 
     // ✅ Si aucune arête disponible (on est dans une impasse), permettre le demi-tour
     if (availableEdges.isEmpty()) {
-        qDebug() << "⚠️ Véhicule" << m_id << "en impasse au nœud" << m_currentNode->id
-                 << "- demi-tour forcé";
 
         // Reconstruire la liste EN AUTORISANT le retour arrière cette fois
         for (Edge* edge : m_currentNode->edges) {
@@ -142,7 +134,6 @@ void Vehicle::selectNextEdge()
 
     // ✅ Vérification de sécurité
     if (!m_targetNode || m_targetNode == m_currentNode) {
-        qDebug() << "❌ Destination invalide pour véhicule" << m_id;
         m_currentEdge = nullptr;
         m_targetNode = nullptr;
         m_speed = 0.0;

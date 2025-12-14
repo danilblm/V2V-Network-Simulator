@@ -24,7 +24,15 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("mapController", &mapController);
 
     // Contrôleur de simulation avec graphe d'interférences
+    // Dans main.cpp, après avoir créé simulationController
     SimulationController simulationController(mapController.getGraph());
+
+    // ✅ Initialiser la grille spatiale (limites de Mulhouse)
+    simulationController.interferenceGraph()->initializeSpatialGrid(
+        47.70, 47.80,  // minLat, maxLat
+        7.28, 7.40     // minLon, maxLon
+        );
+
     engine.rootContext()->setContextProperty("simulationController", &simulationController);
 
     const QUrl url = QUrl::fromLocalFile(QDir::current().filePath("../../src/MainUI.qml"));

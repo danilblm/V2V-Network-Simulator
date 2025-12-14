@@ -41,19 +41,19 @@ Rectangle {
                 spacing: 6
 
                 Text {
-                    text: "Connexions actives: " +
+                    text: "Arêtes directionnelles: " +
                           (simulationController.interferenceGraph ?
-                           simulationController.interferenceGraph.connectionCount : 0)
+                           simulationController.interferenceGraph.directedEdgeCount : 0)
                     font.pixelSize: 13
                     color: "#2c3e50"
                 }
 
                 Text {
-                    text: "Véhicules connectés: " +
+                    text: "Connexions potentielles: " +
                           (simulationController.interferenceGraph ?
-                           simulationController.interferenceGraph.connectedVehicleCount : 0)
+                           simulationController.interferenceGraph.potentialConnectionCount : 0)
                     font.pixelSize: 13
-                    color: "#27ae60"
+                    color: "#3498db"
                 }
 
                 Text {
@@ -72,7 +72,7 @@ Rectangle {
 
                 Text {
                     id: avgDegreeText
-                    text: "Degré moyen: --"
+                    text: "Degré sortant moyen: --"
                     font.pixelSize: 12
                     color: "#7f8c8d"
                 }
@@ -102,7 +102,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: "Les rayons sont assignés aléatoirement à chaque véhicule"
+                    text: "Rayons colorés aléatoirement par véhicule"
                     font.pixelSize: 10
                     color: "#95a5a6"
                     wrapMode: Text.WordWrap
@@ -111,9 +111,9 @@ Rectangle {
             }
         }
 
-        // Liste des connexions récentes
+        // Liste des arêtes récentes
         GroupBox {
-            title: "🔗 Connexions récentes"
+            title: "🔗 Arêtes directionnelles"
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -140,7 +140,7 @@ Rectangle {
                             spacing: 2
 
                             Text {
-                                text: "🚗 " + model.vehicle1 + " ↔ 🚗 " + model.vehicle2
+                                text: "🚗 " + model.fromVehicle + " → 🚗 " + model.toVehicle
                                 font.pixelSize: 11
                                 font.bold: true
                                 color: "#2c3e50"
@@ -191,13 +191,13 @@ Rectangle {
                 }
 
                 Text {
-                    text: "• Le graphe se met à jour en temps réel"
+                    text: "• Arêtes: A→B si B dans rayon de A"
                     font.pixelSize: 9
                     color: "#6c757d"
                 }
 
                 Text {
-                    text: "• Les connexions dépendent de la distance"
+                    text: "• Cercles colorés = rayons de transmission"
                     font.pixelSize: 9
                     color: "#6c757d"
                 }
@@ -219,27 +219,27 @@ Rectangle {
         onTriggered: {
             if (simulationController.interferenceGraph) {
                 var stats = simulationController.interferenceGraph.getStatistics()
-                avgDegreeText.text = "Degré moyen: " + stats.averageDegree
+                avgDegreeText.text = "Degré sortant moyen: " + stats.averageOutDegree
                 avgDistanceText.text = "Distance moyenne: " + stats.averageDistance
             }
         }
     }
 
-    // Timer pour afficher les connexions
+    // Timer pour afficher les arêtes
     Timer {
         interval: 1000
         running: simulationController.isRunning
         repeat: true
         onTriggered: {
             if (simulationController.interferenceGraph) {
-                var connections = simulationController.interferenceGraph.getConnectionsForVisualization()
+                var edges = simulationController.interferenceGraph.getDirectedEdgesForVisualization()
 
                 connectionsModel.clear()
 
-                // Afficher les 10 premières connexions
-                var maxDisplay = Math.min(10, connections.length)
+                // Afficher les 10 premières arêtes
+                var maxDisplay = Math.min(10, edges.length)
                 for (var i = 0; i < maxDisplay; i++) {
-                    connectionsModel.append(connections[i])
+                    connectionsModel.append(edges[i])
                 }
             }
         }
@@ -249,13 +249,17 @@ Rectangle {
     Connections {
         target: simulationController.interferenceGraph
 
-        function onNewConnectionEstablished(vehicleId1, vehicleId2, distance) {
-            console.log("🔗 Nouvelle connexion:", vehicleId1, "↔", vehicleId2,
+        function onNewDirectedEdgeEstablished(fromVehicleId, toVehicleId, distance) {
+            console.log("🔗 Nouvelle arête:", fromVehicleId, "→", toVehicleId,
                        "(" + Math.round(distance) + "m)")
         }
 
-        function onConnectionLost(vehicleId1, vehicleId2) {
-            console.log("❌ Connexion perdue:", vehicleId1, "↔", vehicleId2)
+        function onDirectedEdgeLost(fromVehicleId, toVehicleId) {
+            console.log("❌ Arête perdue:", fromVehicleId, "→", toVehicleId)
+        }
+
+        function onNewPotentialConnection(vehicleId1, vehicleId2) {
+            console.log("💡 Connexion potentielle:", vehicleId1, "↔", vehicleId2)
         }
     }
 }
