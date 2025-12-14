@@ -3,7 +3,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QDebug>
 #include <QCoreApplication>
 #include <QSet>
 
@@ -86,7 +85,6 @@ void MapController::loadOSMData(const QString &path)
         // ✅ FILTRE 3: N'accepter QUE les types autorisés
         if (!allowedRoadTypes.contains(highwayType)) {
             filteredCount++;
-            qDebug() << "🚫 Type de route ignoré:" << highwayType;
             continue;
         }
 
@@ -133,12 +131,6 @@ void MapController::loadOSMData(const QString &path)
         roadList << roadData;
         edgeCount++;
     }
-
-    qDebug() << "✅ Graphe construit :" << graph.nodes.size() << "nœuds,"
-             << graph.edges.size() << "arêtes.";
-    qDebug() << "✅ Routes affichées (carrossables):" << edgeCount;
-    qDebug() << "🚫 Routes filtrées (piétons/vélos):" << filteredCount;
-
     emit roadReady(roadList);
 }
 

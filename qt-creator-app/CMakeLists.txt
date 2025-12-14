@@ -24,6 +24,8 @@ qt_add_executable(appV2VProject
     src/models/VehicleModel.h
     src/models/InterferenceGraphModel.h
     src/models/InterferenceGraphModel.cpp
+    src/models/SpatialGrid.h
+    src/models/SpatialGrid.cpp
 )
 
 # --- Déclaration du module QML
@@ -39,7 +41,6 @@ qt_add_qml_module(appV2VProject
         QML_FILES src/views/Sidebar.qml
         QML_FILES src/views/CollapsibleSection.qml
         QML_FILES src/views/VehicleItem.qml
-
 )
 
 # --- Lien avec les bibliothèques Qt
