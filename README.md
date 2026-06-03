@@ -18,6 +18,20 @@ The simulator loads a city road graph, spawns hundreds to thousands of moving ve
 
 It is designed to stay smooth with **thousands of vehicles** thanks to a spatial-grid broad-phase that replaces the naïve O(n²) neighbour search with an O(n) one.
 
+## 📸 Screenshots
+
+### Real OpenStreetMap road network — Mulhouse
+
+The drivable road graph imported from OpenStreetMap, each road class drawn with its own colour.
+
+![Map of Mulhouse with the imported drivable road network](docs/screenshots/map.jpg)
+
+### Live V2V interference graph (300 vehicles)
+
+Transmission ranges (coloured circles), directed communication links between vehicles, and live network statistics — directional edges, potential connections, isolated vehicles, average out-degree and distance.
+
+![V2V interference simulation running with 300 vehicles](docs/screenshots/simulation.jpg)
+
 ## 🚀 Features
 
 - **Real road network** — imports OpenStreetMap data and keeps only drivable roads (motorway → residential/service), filtering out footways, cycleways, paths, steps, etc.
